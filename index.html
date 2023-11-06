@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atmaca Decoder</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://king-ahmed.github.io/decrypt/tesseract.min.js"></script>
+    <script src="node_modules/tesseract.js/dist/tesseract.min.js"></script>
 </head>
 <body>
     <div class="container mt-5">
@@ -39,6 +39,7 @@
             <div class="col-md-6">
                 <button class="btn btn-primary" id="convertButton">Convert</button>
                 <button class="btn btn-primary" id="accessWebcamButton">Access Webcam</button>
+				<button class="btn btn-primary" id="switchWebcamButton" style="display: none;">Switch Webcam</button>
                 <button class="btn btn-danger" id="disableWebcamButton" style="display: none;">Disable Webcam</button>
                 <button class="btn btn-primary" id="convertToBinaryButton" style="display: none;">Convert to Binary</button>
                 <button class="btn btn-primary" id="convertToTextButton" style="display: none;">Convert to Text</button>
@@ -56,8 +57,40 @@
             document.getElementById('disableWebcamButton').addEventListener('click', disableWebcam);
             document.getElementById('convertToBinaryButton').addEventListener('click', convertToBinary);
             document.getElementById('convertToTextButton').addEventListener('click', convertToText);
+                
+				async function switchWebcam() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter((device) => device.kind === 'videoinput');
 
-            function convert() {
+                if (videoDevices.length > 1) {
+                    // Vous avez au moins deux webcams disponibles
+                    // Commutez entre elles en alternance
+                    const currentDeviceId = videoStream.getVideoTracks()[0].getSettings().deviceId;
+                    const newDeviceId = videoDevices.find((device) => device.deviceId !== currentDeviceId).deviceId;
+
+                    videoStream.getTracks().forEach(function (track) {
+                        track.stop();
+                    });
+
+                    const constraints = {
+                        video: { deviceId: { exact: newDeviceId } }
+                    };
+                    const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+                    videoStream = newStream;
+                    videoElement.srcObject = newStream;
+                    videoElement.play();
+                }
+            } catch (error) {
+                console.error('Error switching webcam:', error);
+            }
+        }
+
+        // Écoutez le clic sur le bouton "Switch Webcam"
+        switchWebcamButton.addEventListener('click', switchWebcam);
+            
+			function convert() {
                 var textLeft = document.getElementById('textLeft').value;
                 var radioState = document.querySelector('input[name="conversionType"]:checked').value;
                 var textRight = document.getElementById('textRight');
