@@ -39,7 +39,7 @@
             <div class="col-md-6">
                 <button class="btn btn-primary" id="convertButton">Convert</button>
                 <button class="btn btn-primary" id="accessWebcamButton">Access Webcam</button>
-				<button class="btn btn-primary" id="switchWebcamButton" style="display: none;">Switch Webcam</button>
+				<button class="btn btn-primary" id="switchWebcamButton">Switch Webcam</button>
                 <button class="btn btn-danger" id="disableWebcamButton" style="display: none;">Disable Webcam</button>
                 <button class="btn btn-primary" id="convertToBinaryButton" style="display: none;">Convert to Binary</button>
                 <button class="btn btn-primary" id="convertToTextButton" style="display: none;">Convert to Text</button>
@@ -50,10 +50,12 @@
     <script>
         let videoStream;
         let videoElement;
+		let switchWebcamButton;
 
         document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('convertButton').addEventListener('click', convert);
             document.getElementById('accessWebcamButton').addEventListener('click', accessWebcam);
+            document.getElementById('switchWebcamButton').addEventListener('click', switchWebcam);
             document.getElementById('disableWebcamButton').addEventListener('click', disableWebcam);
             document.getElementById('convertToBinaryButton').addEventListener('click', convertToBinary);
             document.getElementById('convertToTextButton').addEventListener('click', convertToText);
@@ -74,14 +76,15 @@
         } else {
             console.log('No multiple video devices found.');
         }
-    } catch (error) {
-        console.error('Error switching webcam:', error);
+    } catch (error) {   
+		console.error('Error switching webcam:', error);
     }
 }
 
 
         // Écoutez le clic sur le bouton "Switch Webcam"
-        switchWebcamButton.addEventListener('click', switchWebcam);
+        switchWebcamButton = document.getElementById('switchWebcamButton');
+		switchWebcamButton.addEventListener('click', switchWebcam);
             
 			function convert() {
                 var textLeft = document.getElementById('textLeft').value;
