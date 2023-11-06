@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atmaca Decoder</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="node_modules/tesseract.js/dist/tesseract.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Atmaca Decoder</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <label for="textLeft">Input Text</label>
+                <textarea id="textLeft" class="form-control" rows="10" cols="36"></textarea>
+            </div>
+            <div class="col-md-6">
+                <label for="textRight">Output Text</label>
+                <textarea id="textRight" class="form-control" rows="10" cols="36" readonly></textarea>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <label>Conversion Type</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="conversionType" id="textToBinary" value="1" checked>
+                    <label class="form-check-label" for="textToBinary">
+                        Text To Binary
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="conversionType" id="binaryToText" value="2">
+                    <label class="form-check-label" for="binaryToText">
+                        Binary To Text
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <button class="btn btn-primary" id="convertButton">Convert</button>
+                <button class="btn btn-primary" id="accessWebcamButton">Access Webcam</button>
+                <button class="btn btn-danger" id="disableWebcamButton" style="display: none;">Disable Webcam</button>
+                <button class="btn btn-primary" id="convertToBinaryButton" style="display: none;">Convert to Binary</button>
+                <button class="btn btn-primary" id="convertToTextButton" style="display: none;">Convert to Text</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let videoStream;
+        let videoElement;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('convertButton').addEventListener('click', convert);
+            document.getElementById('accessWebcamButton').addEventListener('click', accessWebcam);
+            document.getElementById('disableWebcamButton').addEventListener('click', disableWebcam);
+            document.getElementById('convertToBinaryButton').addEventListener('click', convertToBinary);
+            document.getElementById('convertToTextButton').addEventListener('click', convertToText);
+
+            function convert() {
+                var textLeft = document.getElementById('textLeft').value;
+                var radioState = document.querySelector('input[name="conversionType"]:checked').value;
+                var textRight = document.getElementById('textRight');
+
+                var binaryText = "";
+                textRight.value = "";
+
+                if (radioState === "1") {
+                    // Text To Binary
+                    for (var i = 0; i < textLeft.length; i++) {
+                        var char = textLeft[i];
+                        binaryText += char.charCodeAt(0).toString(2) + ' ';
+                    }
+                } else {
+                    // Binary To Text
+                    var binaryList = textLeft.trim().split(" ");
+                    for (var i = 0; i < binaryList.length; i++) {
+                        var binaryChar = binaryList[i];
+                        var decimalChar = parseInt(binaryChar, 2);
+                        binaryText += String.fromCharCode(decimalChar);
+                    }
+                }
+
+                textRight.value = binaryText;
+            }
+
+            function accessWebcam() {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function (stream) {
+                        videoStream = stream;
+                        videoElement = document.createElement('video');
+                        videoElement.setAttribute('id', 'videoElement');
+                        document.body.appendChild(videoElement);
+                        videoElement.srcObject = stream;
+                        videoElement.play();
+                        document.getElementById('accessWebcamButton').style.display = 'none';
+                        document.getElementById('disableWebcamButton').style.display = 'block';
+                        document.getElementById('convertToBinaryButton').style.display = 'block';
+                        document.getElementById('convertToTextButton').style.display = 'block';
+                    })
+                    .catch(function (error) {
+                        console.error('Error accessing webcam:', error);
+                    });
+            }
+
+            function disableWebcam() {
+                if (videoStream) {
+                    videoStream.getTracks().forEach(function (track) {
+                        track.stop();
+                    });
+                }
+                if (videoElement) {
+                    videoElement.remove();
+                }
+                document.getElementById('accessWebcamButton').style.display = 'block';
+                document.getElementById('disableWebcamButton').style.display = 'none';
+                document.getElementById('convertToBinaryButton').style.display = 'none';
+                document.getElementById('convertToTextButton').style.display = 'none';
+            }
+
+            function convertToBinary() {
+    // Capturez une image de la webcam
+    var canvas = document.createElement('canvas');
+    var context = canvas.getContext('2d');
+    var videoElement = document.getElementById('videoElement');
+
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
+
+    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+    // Convertissez l'image capturée en texte binaire
+    var binaryData = convertCanvasToBinary(canvas);
+
+    // Mettez le texte binaire dans la case "Input Text"
+    var textLeft = document.getElementById('textLeft');
+    if (textLeft) {
+        textLeft.value = binaryData;
+    }
+}
+
+function convertCanvasToBinary(canvas) {
+    var context = canvas.getContext('2d');
+    var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    var binaryData = '';
+
+    for (var i = 0; i < imageData.data.length; i++) {
+        // Convertissez chaque composant de couleur en binaire
+        var binaryValue = imageData.data[i].toString(2).padStart(8, '0');
+        binaryData += binaryValue;
+    }
+
+    return binaryData;
+}
+
+
+            function convertToText() {
+                // Capturez une image de la webcam
+                var canvas = document.createElement('canvas');
+                var context = canvas.getContext('2d');
+                var videoElement = document.getElementById('videoElement');
+
+                canvas.width = videoElement.videoWidth;
+                canvas.height = videoElement.videoHeight;
+
+                context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+                // Convertissez l'image capturée en texte en utilisant Tesseract.js
+                Tesseract.recognize(
+                    canvas,
+                    'eng', // Langue de reconnaissance, vous pouvez la changer en fonction de vos besoins
+                    {
+                        logger: info => console.log(info)
+                    }
+                ).then(({ data: { text } }) => {
+                    // Le texte reconnu est dans la variable "text"
+
+                    // Mettez le texte reconnu dans la case "Input Text"
+                    var textLeft = document.getElementById('textLeft');
+                    if (textLeft) {
+                        textLeft.value = text;
+                    }
+                });
+            }
+        });
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
